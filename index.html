@@ -1,0 +1,271 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="initial-scale=1,maximum-scale=1,user-scalable=no"
+    />
+    <!--
+  ArcGIS API for JavaScript, https://js.arcgis.com
+  For more information about the intro-mapview sample, read the original sample description at developers.arcgis.com.
+  https://developers.arcgis.com/javascript/latest/sample-code/intro-mapview/index.html
+  -->
+<title>
+      Intro to MapView - Create a 2D map | Sample | ArcGIS API for JavaScript
+      4.17
+    </title>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+      #legendaDiv{
+          visibility: hidden;
+      }
+
+    button {
+        background-color: #2f82a3;
+        text-align: center;
+        font-size: 16px;
+        border-radius: 8px;
+        border-color: #293236;
+    }
+    </style>
+
+    <link
+      rel="stylesheet"
+      href="https://js.arcgis.com/4.17/esri/themes/light/main.css"
+    />
+    <script src="https://js.arcgis.com/4.17/"></script>
+
+    <script>
+        require(["esri/Map", "esri/views/MapView", "esri/layers/FeatureLayer", "esri/widgets/Legend", "esri/widgets/LayerList", "esri/widgets/BasemapToggle", "esri/widgets/Search"], function(Map, MapView, FeatureLayer, Legend, LayerList, BasemapToggle, Search) {
+
+            var harta = new Map({
+                basemap: "hybrid"//"streets-relief-vector"
+            });
+
+            var viewHarta = new MapView({
+                container: "viewDiv",
+                map: harta,
+                zoom: 7,
+                center: [25, 46]
+            });
+
+            var simbolImplicit = {
+                type: "simple-marker",
+                style: "square",
+                color: "red",
+                size: "8px",
+                outline: {
+                    color: "black",
+                    width: 1
+                }
+            }
+
+            var simbolStatieTramvai = {
+                type: "simple-marker",
+                style: "triangle",
+                color: "blue",
+                size: "8px",
+                outline: {
+                    color: "black",
+                    width: 1
+                }
+            }
+
+            var simbolStatieTren = {
+                type: "simple-marker",
+                style: "diamond",
+                color: "purple",
+                size: "8px",
+                outline: {
+                    color: "black",
+                    width: 1
+                }
+            }
+
+            var simbolStatieAutobuz = {
+                type: "simple-marker",
+                style: "circle",
+                color: "brown",
+                size: "8px",
+                outline: {
+                    color: "black",
+                    width: 1
+                }
+            }
+
+            var afisareSimboluriStatii = {
+                type: "unique-value",
+                field: "fclass",
+                label: "Tip statie",
+                defaultSymbol: simbolImplicit,
+                defaultLabel: "Alt tip de statie",
+                uniqueValueInfos: [
+                    {
+                        value: "tram_stop",
+                        symbol: simbolStatieTramvai,
+                        label: "Statie tramvai"
+                    },
+                    {
+                        value: "railway_station",
+                        symbol: simbolStatieTren,
+                        label: "Statie tren"
+                    },
+                    {
+                        value: "bus_station",
+                        symbol: simbolStatieAutobuz,
+                        label: "Statie autobuz"
+                    }
+                ]
+            };
+
+            var urlJudete = "https://services7.arcgis.com/XJBQ1yE5ZbpHhBLy/arcgis/rest/services/judete/FeatureServer/0";
+            var flJudete = new FeatureLayer({
+                url: urlJudete
+            })
+
+            var urlStatii = "https://services7.arcgis.com/XJBQ1yE5ZbpHhBLy/arcgis/rest/services/trasport3/FeatureServer/0";
+            var flStatii = new FeatureLayer({
+                url: urlStatii,
+                renderer: afisareSimboluriStatii,
+                title: "Statii"
+            })
+
+            var urlCf = "https://services7.arcgis.com/XJBQ1yE5ZbpHhBLy/arcgis/rest/services/cale_ferata/FeatureServer/0";
+            var flCf = new FeatureLayer({
+                url: urlCf
+            })
+
+            harta.add(flJudete);
+            harta.add(flCf);
+            harta.add(flStatii);
+
+            var sablonPopUpStatii = {
+                title: "Statie",
+                content: [
+                    {
+                        type: "fields",
+                        fieldInfos: [
+                            {
+                                fieldName: "name",
+                                label: "Nume"
+                            },
+                            {
+                                fieldName: "fclass",
+                                label: "Tip"
+                            }
+                        ]
+                    }
+
+                ]
+            }
+            flStatii.popupTemplate = sablonPopUpStatii;
+
+            var sablonPopUpJudete = {
+                title: "Judet: {nume}",
+                content: [
+                    {
+                        type: "fields",
+                        fieldInfos: [
+                            {
+                                fieldName: "Resedinta",
+                                label: "Resedinta judet"
+                            },
+                            {
+                                fieldName: "S_ha",
+                                label: "Suprafata (ha)"
+                            }
+                        ]
+                    }
+                ]
+            }
+            flJudete.popupTemplate = sablonPopUpJudete;
+
+            viewHarta.ui.add("btn1", "top-right");
+
+          const legenda = new Legend({
+              view: viewHarta,
+              container: legendaDiv,
+              layerInfos: [
+                  {
+                      layer: flStatii
+                  },
+                  {
+                      layer: flJudete
+                  },
+                  {
+                      layer: flCf
+                  }
+              ]
+          });
+          viewHarta.ui.add(legenda, "top-right");
+
+          const straturiTematice = new LayerList({
+              view: viewHarta
+          });
+          viewHarta.ui.add(straturiTematice, "bottom-left");
+
+          const galerieHarti = new BasemapToggle({
+              view: viewHarta,
+              nextBasemap: "national-geographic"
+          });
+          viewHarta.ui.add(galerieHarti, "bottom-right");
+
+          var surseCautare = [
+              {
+                  layer: flStatii,
+                  searchFields: ["name"],
+                  displayField: "name",
+                  exactMatch: false,
+                  outFields: ["name"],
+                  name: "Cauta statie",
+                  placeholder: "Piata Unirii 2"
+              },
+              {
+                  layer: flJudete,
+                  searchFields: ["nume"],
+                  exactMatch: false,
+                  outFields: ["*"],
+                  name: "Cauta judet",
+                  placeholder: "Ilfov"
+              }
+          ];
+          var cauta = new Search({
+              view: viewHarta,
+              allPlaceholder: "Cauta statii si judete",
+              sources: surseCautare
+          });
+          viewHarta.ui.add(cauta,{
+              position: "top-left",
+              index: 2
+          } );
+            
+        })
+    </script>
+</head>
+
+<body>
+  <button id = "btn1"  onclick="openLegend()">Legenda</button>
+  <div id="viewDiv"></div>
+  <div id="legendaDiv"></div>
+
+  <script>
+      
+   function openLegend(){ 
+       if(document.getElementById("legendaDiv").style.visibility == "hidden") {
+            document.getElementById("legendaDiv").style.visibility = "visible";
+       }
+       else {
+        document.getElementById("legendaDiv").style.visibility = "hidden";
+
+       }    
+   }
+</script>
+</body>
+</html>
